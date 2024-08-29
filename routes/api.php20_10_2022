@@ -1,0 +1,246 @@
+<?php
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\CurrencyController;
+use App\Http\Controllers\Api\SoundsController;
+use App\Http\Controllers\Api\HashTagsController;
+use App\Http\Controllers\Api\VideosController;
+use App\Http\Controllers\Api\UsersController;
+use App\Http\Controllers\Api\SpinWheelController;
+use App\Http\Controllers\Api\PrivateController;
+use App\Http\Controllers\Api\FavoriteController;
+use App\Http\Controllers\Api\WalletController;
+use App\Models\Banner;
+
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| is assigned the "api" middleware group. Enjoy building your API!
+|
+*/
+
+// Without auth route starts
+Route::post('check-mail', [AuthController::class, 'CheckMail']);
+Route::post('send-otp', [AuthController::class, 'sendOtp']);
+Route::get('test-otp', [AuthController::class, 'testOtp']);
+Route::post('verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('check-username', [AuthController::class, 'CheckUsername']);
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
+Route::post('SocialLogin', [AuthController::class, 'SocialLogin']);
+Route::get('overview-information', [AuthController::class, 'OverviewInformation']);
+Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('reset-password', [AuthController::class, 'resetPassword']);
+Route::get('categorie/list', [AuthController::class, 'getList']);
+
+Route::prefix('private')->group(function () {
+    // list videos
+    Route::get('get-user-levels', [PrivateController::class, 'getUserLevels']);
+});
+
+Route::get('banners', function (Banner $banner) {
+    return response()->json($banner::get());
+});
+
+Route::prefix('video')->group(function () {
+    // list videos
+    Route::get('list', [VideosController::class, 'listVideo']);
+});
+
+Route::prefix('sound')->group(function () {
+
+    // get sounds by id
+    Route::post('/get', [SoundsController::class, 'getSound']);
+});
+
+// Without auth route end
+Route::middleware('auth:api')->group(function () {
+
+    /**
+     * Sound section
+     */
+    Route::prefix('sound')->group(function () {
+        // sound categories
+        Route::get('categories', [SoundsController::class, 'categoryList']);
+        // get sounds by category id
+        Route::post('/list', [SoundsController::class, 'index']);
+        // videos by sound
+        Route::post('videosbysound', [SoundsController::class, 'videosBySound']);
+    });
+
+    /**
+     * Hashtag section
+     */
+    Route::prefix('hashtag')->group(function () {
+        // list
+        Route::get('list', [HashTagsController::class, 'list']);
+
+        // add
+        Route::post('add', [HashTagsController::class, 'add']);
+
+        // Get Top hashtag with videos
+        Route::get('top-hashtags-videos', [HashTagsController::class, 'topHashtagsVideos']);
+        // Get videos by hashtag id
+        Route::post('get-videos-by-hashtag', [HashTagsController::class, 'getVideosByHashtag']);
+        // List of hashtag and their videos by search hashtag name
+        Route::get('search', [HashTagsController::class, 'searchHashtags']);
+    });
+
+    /**
+     * video section
+     */
+    Route::prefix('video')->group(function () {
+        // video category
+        Route::get('categories', [VideosController::class, 'getVideoCategories']);
+        // video language
+        Route::get('languages', [VideosController::class, 'getVideoLanguages']);
+        Route::get('field-data', [VideosController::class, 'getFieldData']);
+        // video post
+        Route::post('post', [VideosController::class, 'postVideo']);
+        // like the video
+        Route::post('like', [VideosController::class, 'likeVideo']);
+        // comment on video
+        Route::post('comment', [VideosController::class, 'commentVideo']);
+        // view the video
+        Route::post('view', [VideosController::class, 'viewVideo']);
+        // list videos
+        // Route::get('list', [VideosController::class, 'listVideo']);
+        // get Users and thier last comment with comments likeed or not
+        Route::post('comments', [VideosController::class, 'videoComments']);
+        // comment like
+        Route::post('comment-like', [VideosController::class, 'videoCommentLike']);
+        // comment like
+        Route::get('comment-like-data', [VideosController::class, 'videoCommentLikeData']);
+        // private
+        Route::get('private', [VideosController::class, 'private']);
+        // delete private
+        Route::post('delete', [VideosController::class, 'deleteVideo']);
+        // publish private
+        Route::post('publish-private', [VideosController::class, 'publishPrivate']);
+        // user reel videos
+        Route::post('user-videos', [VideosController::class, 'userVideos']);
+        // user whom he follows > all video list
+        Route::get('following', [VideosController::class, 'following']);
+        Route::get('popular', [VideosController::class, 'popular']);
+        // report video
+        Route::post('is-video-report', [VideosController::class, 'isVideoReported']);
+        Route::post('report', [VideosController::class, 'report']);
+
+        // mark video fav unfav
+        Route::post('do-fav-unfav', [VideosController::class, 'doFavUnfav']);
+
+        // get favorite videos
+        Route::get('favorite-videos', [VideosController::class, 'favoriteVideos']);
+
+        // update video visibility
+        Route::post('change-visibility', [VideosController::class, 'changeVisibility']);
+    });
+
+    /**
+     * Private users
+     */
+    Route::prefix('user')->group(function () {
+
+        // edit profile
+        Route::post('edit', [UsersController::class, 'edit']);
+
+        // Get user profile by id
+        Route::post('get-profile', [UsersController::class, 'getProfile']);
+
+        // Follow user
+        Route::post('follow-unfollow-user', [UsersController::class, 'followUnfollowUser']);
+
+        // user specific settings
+        Route::post('push-notification-settings', [UsersController::class, 'pushNotificationSettingsSave']);
+        Route::get('push-notification-settings', [UsersController::class, 'pushNotificationSettingsGet']);
+
+        // user liked videos
+        Route::post('user-liked-videos', [UsersController::class, 'userLikedVideos']);
+
+        // User de activate account request
+        Route::get('deactivate-account-request', [UsersController::class, 'deactivateAccountRequest']);
+        Route::get('check-user-status', [UsersController::class, 'checkUserStatus']);
+
+        // user safety preference
+        Route::get('safety-preference', [UsersController::class, 'safetyPreferenceList']);
+        Route::post('safety-preference', [UsersController::class, 'safetyPreferenceSave']);
+
+        // request verification
+        Route::post('request-verification', [UsersController::class, 'requestVerification']);
+
+        // notification list for user
+        Route::get('notification-list', [UsersController::class, 'notificationList']);
+
+        // chat inbox
+        Route::get('chat-inbox', [UsersController::class, 'chatInbox']);
+        // send notification
+        Route::post('send-chat-notification', [ChatController::class, 'SendChatNotification']);
+        // get followers of logged in user
+        Route::post('get-followers', [UsersController::class, 'getFollowers']);
+        Route::post('get-followings', [UsersController::class, 'getFollowings']);
+
+        // block and unblock
+        Route::post('block-unblock-user', [UsersController::class, 'doBlockUnblockUser']);
+        // check block or unblock
+        Route::post('is-user-blocked', [UsersController::class, 'checkBlockUnblockUser']);
+        // report user
+        Route::post('report-user', [UsersController::class, 'doReportUser']);
+    });
+    /**
+     * Currency section
+     */
+    Route::prefix('currencies')->group(function () {
+        Route::get('data', [CurrencyController::class, 'listData']);
+    });
+
+    /**
+     * Spin Wheel section
+     */
+    Route::prefix('spin-wheel')->group(function () {
+        Route::get('data', [SpinWheelController::class, 'listData']);
+        Route::get('counter-data', [SpinWheelController::class, 'CounterData']);
+        Route::get('earned-spin', [SpinWheelController::class, 'earnedSpin']);
+        Route::post('reward-won', [SpinWheelController::class, 'rewardWon']);
+    });
+
+    /**
+     * Favorite section
+     */
+    Route::prefix('favorite')->group(function () {
+        Route::post('add-to-favorite', [FavoriteController::class, 'addToFavorite']);
+        Route::get('user-favorites-list', [FavoriteController::class, 'userFavoritesList']);
+    });
+
+    /**
+     * Wallet section
+     */
+    Route::prefix('wallet')->group(function () {
+        Route::get('balance', [WalletController::class, 'balance']);
+        Route::post('withdraw', [WalletController::class, 'withdraw']);
+        Route::get('withdraw-history', [WalletController::class, 'withdrawHistory']);
+    });
+
+    // common api
+    Route::post('update-profile', [AuthController::class, 'updateProfile']);
+    Route::post('change-password', [AuthController::class, 'ChangePassword']);
+    Route::post('CmsPage', [AuthController::class, 'CmsPage']);
+    Route::post('notification-setting', [AuthController::class, 'NotificationSetting']);
+    Route::post('Feedback', [AuthController::class, 'Feedback']);
+    Route::post('2FA-toggle', [AuthController::class, 'FA_Toggle']);
+    Route::post('SiteSettings', [AuthController::class, 'SiteSettings']);
+    Route::post('settings', [AuthController::class, 'SiteSettings']);
+});
+
+// Route::post('user-detail', [UserController::class, 'userDetail']);
+// Route::post('logout', [UserController::class, 'logout']);
+Route::middleware('auth:api')->get('/getUser', function (Request $request) {
+    return $request->user();
+});
